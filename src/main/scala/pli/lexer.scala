@@ -75,6 +75,27 @@ case object VarKeyword extends TokenType
 /** $doc1 “`while`” $doc2 */
 case object WhileKeyword extends TokenType
 
+/** $doc1 “`&`” $doc2 */
+case object AndOperator extends TokenType
+
+/** $doc1 “`&&`” $doc2 */
+case object AndAndOperator extends TokenType
+
+/** $doc1 “`|`” $doc2 */
+case object OrOperator extends TokenType
+
+/** $doc1 “`||`” $doc2 */
+case object OrOrOperator extends TokenType
+
+/** $doc1 “`==`” $doc2 */
+case object EqualsEqualsOperator extends TokenType
+
+/** $doc1 “`true`” $doc2 */
+case object BooleanLiteral extends TokenType
+
+///** $doc1 “`false`” $doc2 */
+//case object FalseKeyword extends TokenType
+
 /** Factory methods for creating [[pli.Parser parsers]]. */
 object Lexer {
   /** Creates a lexer for the given source code. */
@@ -149,10 +170,13 @@ class Lexer(input: Reader) {
   //  - nextTokenTYpe is type of next token in token stream
   val nextTokenText = new StringBuilder
   var nextTokenIntegerValue = 0
+  var nextTokenBooleanValue = true
   var nextTokenType = readNextToken()
+  var nextNextTokenType = readNotFirstTokenType()
 
   def readNotFirstCodepoint() =
     if (atEndOfFile()) -1 else input.read()
+  def readNotFirstTokenType() = readNextToken()
 
   def skipNextCodepoint() {
     if (atEndOfLine()) {
@@ -270,13 +294,15 @@ class Lexer(input: Reader) {
             case "print" => PrintKeyword
             case "var" => VarKeyword
             case "while" => WhileKeyword
+            case "true" => {nextTokenBooleanValue = true ; BooleanLiteral}
+            case "false" => {nextTokenBooleanValue = false ; BooleanLiteral}
             case "abstract" | "case" | "catch" | "class" | "def"
-               | "do" | "false" | "final" | "finally" | "for"
+               | "do" | "final" | "finally" | "for"
                | "forSome" | "implicit" | "import" | "lazy"
                | "match" | "new" | "null" | "override"
                | "package" | "private" | "protected" | "return"
                | "sealed" | "super" | "this" | "throw" | "trait"
-               | "try" | "true" | "type" | "val" | "with" | "yield" =>
+               | "try" | "type" | "val" | "with" | "yield" =>
               throw new Error("Unsupported keyword '" + nextTokenText + "'")
             case _ => Identifier
           }
@@ -291,7 +317,18 @@ class Lexer(input: Reader) {
             case "+" => PlusOperator
             case "-" => MinusOperator
             case "*" => TimesOperator
-            case "=" => EqualsOperator
+            case "=" => nextNextTokenType match {
+              case EqualsOperator => EqualsEqualsOperator
+              case _ => EqualsOperator
+            }
+            case "&" => nextNextTokenType match {
+              case AndOperator => AndAndOperator
+              case _ => AndOperator
+            }
+            case "|" => nextNextTokenType match {
+              case OrOperator => OrOrOperator
+              case _ => OrOperator
+            }
             case _ => throw new Error("Unknown token '" + nextTokenText + "'")
           }
 
@@ -392,6 +429,15 @@ class Lexer(input: Reader) {
     */
   def expect(tokenType: TokenType) {
     if (!check(tokenType)) {
+      throw new Error("Unexpected " + nextTokenType)
+    }
+  }
+  
+    /** Process the next token if it has the specified type,
+    * and throw an error if it doesn't.
+    */
+  def expect(tokenType: TokenType,tokenType2: TokenType ) {
+    if ((!check(tokenType))&&(!check(tokenType2))) {
       throw new Error("Unexpected " + nextTokenType)
     }
   }
