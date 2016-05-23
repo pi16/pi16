@@ -311,7 +311,7 @@ class Lexer(input: Reader) {
         readNextCodepoint()
         while (atOperatorCharacter) {
           readNextCodepoint()
-        }
+        } 
         nextTokenType =
           nextTokenText.toString match {
             case "+" => PlusOperator
