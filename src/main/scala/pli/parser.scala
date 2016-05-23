@@ -15,33 +15,34 @@ object Parser {
     forLexer(Lexer.forFile(filename))
 }
 
-/** Turns a stream of tokens into an abstract syntax tree.
-  *
-  * To create a parser, use the companion object’s
-  * [[Parser#forLexer `forLexer`]], [[Parser#forFile `forFile`]],
-  * or [[Parser#forString `forString`]] methods.
-  *
-  * The parser is the second main component in the language
-  * implementation. It reads a stream of [[pli.TokenType tokens]]
-  * from the [[pli.Lexer lexer]]. It produces an [[pli.ASTNode
-  * abstract syntax tree]] which is further processed by the
-  * other components (see [[pli overview]]).
-  *
-  * The parser has one method `parseN` for each nonterminal
-  * symbol `N` in the grammar´:
-  *
-  *   - [[parseProgram]]
-  *   - [[parseStatement]]
-  *   - [[parseExpression]]
-  *   - [[parseName]]
-  *   - [[parseInteger]]
-  *
-  * Additional `parseN` methods are necessary for helper
-  * nonterminal symbols to implement operator precedence:
-  *
-  *   - [[parseSummand]]
-  *   - [[parseFactor]]
-  */
+/**
+ * Turns a stream of tokens into an abstract syntax tree.
+ *
+ * To create a parser, use the companion object’s
+ * [[Parser#forLexer `forLexer`]], [[Parser#forFile `forFile`]],
+ * or [[Parser#forString `forString`]] methods.
+ *
+ * The parser is the second main component in the language
+ * implementation. It reads a stream of [[pli.TokenType tokens]]
+ * from the [[pli.Lexer lexer]]. It produces an [[pli.ASTNode
+ * abstract syntax tree]] which is further processed by the
+ * other components (see [[pli overview]]).
+ *
+ * The parser has one method `parseN` for each nonterminal
+ * symbol `N` in the grammar´:
+ *
+ *   - [[parseProgram]]
+ *   - [[parseStatement]]
+ *   - [[parseExpression]]
+ *   - [[parseName]]
+ *   - [[parseInteger]]
+ *
+ * Additional `parseN` methods are necessary for helper
+ * nonterminal symbols to implement operator precedence:
+ *
+ *   - [[parseSummand]]
+ *   - [[parseFactor]]
+ */
 class Parser(lexer: Lexer) {
   import lexer._
 
@@ -116,14 +117,27 @@ class Parser(lexer: Lexer) {
 
   /** Parses expressions. */
   def parseExpression: Expression = {
-    var result = parseSummand
-    while (true) {
-      if (check(PlusOperator)) {
-        result = Addition(result, parseSummand)
-      } else if (check(MinusOperator)) {
-        result = Subtraction(result, parseSummand)
-      } else {
-        return result
+    if (check(BooleanLiteral)) {
+      var result = parseOr
+      while (true) {
+        if (check(OrOrOperator)) {
+          result = OrOr(result, parseOr)
+        } else if (check(OrOperator)) {
+          result = Or(result, parseOr)
+        } else {
+          return result
+        }
+      }
+    } else {
+      var result = parseSummand
+      while (true) {
+        if (check(PlusOperator)) {
+          result = Addition(result, parseSummand)
+        } else if (check(MinusOperator)) {
+          result = Subtraction(result, parseSummand)
+        } else {
+          return result
+        }
       }
     }
 
@@ -131,8 +145,10 @@ class Parser(lexer: Lexer) {
     return null
   }
 
-  /** Parses expression that can be the argument of a “`+`” or
-    * “`-`” operator.*/
+  /**
+   * Parses expression that can be the argument of a “`+`” or
+   * “`-`” operator.
+   */
   def parseSummand: Expression = {
     var result = parseFactor
     while (true) {
@@ -147,13 +163,70 @@ class Parser(lexer: Lexer) {
     return null
   }
 
-  /** Parses expression that can be the argument of a “`*`”
-    * operator.*/
+  /**
+   * Parses expression that can be the argument of a “`*`”
+   * operator.
+   */
   def parseFactor: Expression =
     if (at(Identifier)) {
       Variable(parseName)
     } else if (at(IntegerLiteral)) {
       Literal(parseInteger)
+    } else if (check(OpeningParenthesis)) {
+      val result = parseExpression
+      expect(ClosingParenthesis)
+      result
+    } else {
+      throw new Error("unexpected token")
+    }
+
+  /**
+   * Parses expression that can be the argument of a “`||`” or
+   * “`|`” operator.
+   */
+  def parseOr: Expression = {
+    var result = parseAnd
+    while (true) {
+      if (check(AndAndOperator)) {
+        result = AndAnd(result, parseAnd)
+      } else if (check(AndOperator)) {
+        result = And(result, parseAnd)
+      } else {
+        return result
+      }
+    }
+
+    // can never happen, but Scala doesn't realize that :(
+    return null
+  }
+  
+    /**
+   * Parses expression that can be the argument of a “`&&`” or
+   * “`&`” operator.
+   */
+  def parseAnd: Expression = {
+    var result = parseBool
+    while (true) {
+      if (check(EqualsEqualsOperator)) {
+        result = AndAnd(result, parseBool)
+      } else{
+        return result
+      }
+    }
+
+    // can never happen, but Scala doesn't realize that :(
+    return null
+  }
+  
+  /**
+   * Parses expression that can be the argument of a “`==`”
+   * operator.
+   */
+  def parseBool: Expression =
+    if (at(Identifier)) {
+      Variable(parseName)
+    } else if (at(BooleanLiteral)) {
+      BoolLiteral(parseBoolean)
     } else if (check(OpeningParenthesis)) {
       val result = parseExpression
       expect(ClosingParenthesis)
@@ -173,6 +246,13 @@ class Parser(lexer: Lexer) {
   def parseInteger: Int = {
     val value = nextTokenIntegerValue
     expect(IntegerLiteral)
+    value
+  }
+  
+    /** Parses literal booleans. */
+  def parseBoolean: Boolean = {
+    val value = nextTokenBooleanValue
+    expect(BooleanLiteral)
     value
   }
 }

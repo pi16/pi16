@@ -120,3 +120,34 @@ case class Subtraction(lhs: Expression, rhs: Expression) extends Expression
   * @define phrase [[lhs]] `*` [[rhs]]
   */
 case class Multiplication(lhs: Expression, rhs: Expression) extends Expression
+
+/** $doc3.
+  * @define phrase [[lhs]] `&` [[rhs]]
+  */
+case class And(lhs: Expression, rhs: Expression) extends Expression
+
+/** $doc3.
+  * @define phrase [[lhs]] `&&` [[rhs]]
+  */
+case class AndAnd(lhs: Expression, rhs: Expression) extends Expression
+
+/** $doc3.
+  * @define phrase [[lhs]] `|` [[rhs]]
+  */
+case class Or(lhs: Expression, rhs: Expression) extends Expression
+
+/** $doc3.
+  * @define phrase [[lhs]] `||` [[rhs]]
+  */
+case class OrOr(lhs: Expression, rhs: Expression) extends Expression
+
+/** $doc3.
+  * @define phrase [[lhs]] `==` [[rhs]]
+  */
+case class EqualsEquals(lhs: Expression, rhs: Expression) extends Expression
+
+/** $doc3.
+  * @define phrase [[value]]
+  */
+case class BoolLiteral(value: Boolean) extends Expression
+
