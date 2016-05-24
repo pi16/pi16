@@ -190,5 +190,53 @@ class ParserSpec extends Spec {
     result.body should have (length(2))
 
   }
+  
+  "The parser" when "looking for expressions" should
+  "accept boolean literals" in {
+    val result = expression("true")
+    result should be (a [BoolLiteral])
+    result should have ('value(true))
+  }
+
+   it should "accept && opperation" in {
+    val result = expression("true && false")
+    result should be (an [AndAnd])
+  }
+   
+      it should "accept & opperation" in {
+    val result = expression("true & false")
+    result should be (an [And])
+  }
+      
+         it should "accept || opperation" in {
+    val result = expression("true || false")
+    result should be (an [OrOr])
+  }
+         
+            it should "accept | opperation" in {
+    val result = expression("true | false")
+    result should be (an [Or])
+  }
+   it should "accept == opperation" in {
+    val result = expression("true == false")
+    result should be (an [EqualsEquals])
+  }
+     "And " should "be left-associative" in {
+    val result = expression("true & true & true")
+    result should be (an [And])
+    inside(result) { case result: And =>
+      result.lhs should be (an [And])
+      result.rhs should be (a [BoolLiteral])
+    }
+      }
+       it should "bind stronger than or" in {
+    val result = expression("false | true & true")
+    result should be (a [Or])
+  }
+       
+       "Equals" should "bind strongerest" in {
+    val result = expression("false == false | true & true ")
+    result should be (a [Or])
+  }
 
 }

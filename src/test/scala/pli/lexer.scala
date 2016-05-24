@@ -24,4 +24,17 @@ class LexerSpec extends Spec {
     val lexer = Lexer.forString("   foo")
     lexer.startColumn should be (4)
   }
+  
+  it should "recognize the 'true' keyword" in {
+    val lexer = Lexer.forString("true")
+    lexer.nextTokenType should be (BooleanLiteral)
+    lexer.readNextToken()
+    lexer.nextTokenType should be (EndOfFile)
+  }
+  it should "recognize the 'false' keyword" in {
+    val lexer = Lexer.forString("false")
+    lexer.nextTokenType should be (BooleanLiteral)
+    lexer.readNextToken()
+    lexer.nextTokenType should be (EndOfFile)
+  }
 }

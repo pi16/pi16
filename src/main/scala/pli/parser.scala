@@ -117,7 +117,8 @@ class Parser(lexer: Lexer) {
 
   /** Parses expressions. */
   def parseExpression: Expression = {
-    if (check(BooleanLiteral)) {
+    if (at(BooleanLiteral)||at(AndOperator)||at(AndAndOperator)
+        ||at(OrOperator)||at(OrOrOperator)||at(EqualsEqualsOperator)) {
       var result = parseOr
       while (true) {
         if (check(OrOrOperator)) {
@@ -208,7 +209,7 @@ class Parser(lexer: Lexer) {
     var result = parseBool
     while (true) {
       if (check(EqualsEqualsOperator)) {
-        result = AndAnd(result, parseBool)
+        result = EqualsEquals(result, parseBool)
       } else{
         return result
       }
