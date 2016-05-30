@@ -8,15 +8,16 @@ object Pretty {
     new Pretty(out)
 }
 
-/** Turns an abstract syntax tree back into a string.
-  *
-  * To create a pretty printer, use the companion object’s
-  * [[Pretty#toPrintStream `toPrintStream`]] method.
-  *
-  * The pretty printer is a helper component in the language
-  * implementation. It can be used during debugging to print out
-  * abstract syntax trees for manual inspection.
-  */
+/**
+ * Turns an abstract syntax tree back into a string.
+ *
+ * To create a pretty printer, use the companion object’s
+ * [[Pretty#toPrintStream `toPrintStream`]] method.
+ *
+ * The pretty printer is a helper component in the language
+ * implementation. It can be used during debugging to print out
+ * abstract syntax trees for manual inspection.
+ */
 class Pretty(out: PrintStream) {
   /** Current indentation level */
   var level = 0
@@ -31,8 +32,15 @@ class Pretty(out: PrintStream) {
     out.print(value)
   }
 
-  /** Prints newline and then prints enough spaces to reach current
-    * indentation level. */
+  /** Prints integer. */
+  def append(value: Boolean) {
+    out.print(value)
+  }
+
+  /**
+   * Prints newline and then prints enough spaces to reach current
+   * indentation level.
+   */
   def newline() {
     out.println()
     out.print(" " * (2 * level))
@@ -144,6 +152,45 @@ class Pretty(out: PrintStream) {
           append(" * ")
           append(rhs, 9)
         }
+
+      case And(lhs, rhs) =>
+        parens(context > 8) {
+          append(lhs, 8)
+          append(" * ")
+          append(rhs, 9)
+        }
+
+      case AndAnd(lhs, rhs) =>
+        parens(context > 8) {
+          append(lhs, 8)
+          append(" * ")
+          append(rhs, 9)
+        }
+
+      case Or(lhs, rhs) =>
+        parens(context > 7) {
+          append(lhs, 7)
+          append(" * ")
+          append(rhs, 8)
+        }
+
+      case OrOr(lhs, rhs) =>
+        parens(context > 7) {
+          append(lhs, 7)
+          append(" * ")
+          append(rhs, 8)
+        }
+
+      case EqualsEquals(lhs, rhs) =>
+        parens(context > 9) {
+          append(lhs, 9)
+          append(" * ")
+          append(rhs, 10)
+        }
+
+      case BoolLiteral(value) =>
+         append(value)
+
     }
   }
 }

@@ -1,34 +1,41 @@
 package pli
 
-/** Values at runtime.
-  *
-  * The representation of values of various dynamic types is
-  * implemented by case classes extending this trait, see “Known
-  * Subclasses” below for a list.
-  */
+/**
+ * Values at runtime.
+ *
+ * The representation of values of various dynamic types is
+ * implemented by case classes extending this trait, see “Known
+ * Subclasses” below for a list.
+ */
 trait Value
 
 /** Numbers at runtime. */
 case class NumericValue(toInt: Int) extends Value
 
-/** Interpreter.
-  */
+/** Bools at runtime. */
+case class BooleanValue(toBool: Boolean) extends Value
+
+/**
+ * Interpreter.
+ */
 class Interpreter {
   /** Variable bindings. */
   val bindings = Table[String, Value]()
 
-  /** Returns whether a value should be treated as true.
-    */
+  /**
+   * Returns whether a value should be treated as true.
+   */
   def isTrue(value: Value) =
     value match {
-      case NumericValue(0) => false
-      case NumericValue(_) => true
+      case BooleanValue(false) => false
+      case BooleanValue(true) => true
     }
 
-  /** Executes a program.
-    *
-    * Executes the statements in the program as a block.
-    */
+  /**
+   * Executes a program.
+   *
+   * Executes the statements in the program as a block.
+   */
   def run(program: Program) {
     program match {
       case Program(_, _, statements) =>
@@ -36,16 +43,17 @@ class Interpreter {
     }
   }
 
-  /** Executes a block.
-    *
-    * Executes the statements in the block in sequence, in a
-    * nested scope so that:
-    *
-    *   - variable bindings inside the block hide variable
-    *     bindings for the same variable name outside the block
-    *   - variable bindings inside the block are invisible
-    *     outside the block.
-    */
+  /**
+   * Executes a block.
+   *
+   * Executes the statements in the block in sequence, in a
+   * nested scope so that:
+   *
+   *   - variable bindings inside the block hide variable
+   *     bindings for the same variable name outside the block
+   *   - variable bindings inside the block are invisible
+   *     outside the block.
+   */
   def run(statements: Seq[Statement]) {
     bindings.enter()
     for (statement <- statements) {
@@ -107,6 +115,49 @@ class Interpreter {
             eval(rhs) match {
               case NumericValue(b) =>
                 NumericValue(a * b)
+            }
+        }
+      case BoolLiteral(value) =>
+        BooleanValue(value)
+
+      case And(lhs, rhs) =>
+        eval(lhs) match {
+          case BooleanValue(a) =>
+            eval(rhs) match {
+              case BooleanValue(b) =>
+                BooleanValue(a & b)
+            }
+        }
+      case AndAnd(lhs, rhs) =>
+        eval(lhs) match {
+          case BooleanValue(a) =>
+            eval(rhs) match {
+              case BooleanValue(b) =>
+                BooleanValue(a && b)
+            }
+        }
+      case Or(lhs, rhs) =>
+        eval(lhs) match {
+          case BooleanValue(a) =>
+            eval(rhs) match {
+              case BooleanValue(b) =>
+                BooleanValue(a | b)
+            }
+        }
+      case OrOr(lhs, rhs) =>
+        eval(lhs) match {
+          case BooleanValue(a) =>
+            eval(rhs) match {
+              case BooleanValue(b) =>
+                BooleanValue(a || b)
+            }
+        }
+      case EqualsEquals(lhs, rhs) =>
+        eval(lhs) match {
+          case BooleanValue(a) =>
+            eval(rhs) match {
+              case BooleanValue(b) =>
+                BooleanValue(a == b)
             }
         }
     }
